@@ -11,7 +11,10 @@ interface Link {
   source: string;
   target: string;
 }
-
+const a1 = Math.random();
+const b1 = Math.random();
+const c1 = Math.random();
+const d1 = Math.random();
 const DirectedGraph: React.FC = () => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [nodesData, setNodesData] = useState<Node[]>([]);
@@ -85,12 +88,12 @@ const DirectedGraph: React.FC = () => {
       const dr = Math.sqrt(dx * dx + dy * dy);
 
       const controlPoint1 = {
-        x: d.source.x + dx / 3 + (Math.random() - 0.5) * 100,
-        y: d.source.y + dy / 3 + (Math.random() - 0.5) * 100,
+        x: d.source.x + dx / 3 + (a1 - 0.5) * 100,
+        y: d.source.y + dy / 3 + (b1 - 0.5) * 100,
       };
       const controlPoint2 = {
-        x: d.source.x + (2 * dx) / 3 + (Math.random() - 0.5) * 100,
-        y: d.source.y + (2 * dy) / 3 + (Math.random() - 0.5) * 100,
+        x: d.source.x + (2 * dx) / 3 + (c1 - 0.5) * 100,
+        y: d.source.y + (2 * dy) / 3 + (d1 - 0.5) * 100,
       };
 
       return `M${d.source.x},${d.source.y} C${controlPoint1.x},${controlPoint1.y} ${controlPoint2.x},${controlPoint2.y} ${d.target.x},${d.target.y}`;
