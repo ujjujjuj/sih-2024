@@ -1,0 +1,197 @@
+"use client";
+import { useEffect, useRef, useState } from "react";
+import * as d3 from "d3";
+
+interface Node {
+  id: string;
+  type: string;
+}
+
+interface Link {
+  source: string;
+  target: string;
+}
+
+const DirectedGraph: React.FC = () => {
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const [nodesData, setNodesData] = useState<Node[]>([]);
+  const [linksData, setLinksData] = useState<Link[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch("/api/nodes");
+      const data = await response.json();
+
+      setNodesData(data.nodes);
+      setLinksData(data.links);
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (nodesData.length === 0 || linksData.length === 0 || !svgRef.current)
+      return;
+
+    const width = 1000;
+    const height = 600;
+
+    d3.select(svgRef.current).selectAll("*").remove();
+
+    const svg = d3
+      .select(svgRef.current)
+      .attr("width", width)
+      .attr("height", height)
+      .style("border", "1px solid #ccc");
+
+    const g = svg.append("g");
+
+    const zoom = d3
+      .zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.1, 4])
+      .on("zoom", (event: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
+        g.attr("transform", event.transform.toString());
+      });
+
+    svg.call(zoom);
+
+    const simulation = d3
+      .forceSimulation(nodesData as d3.SimulationNodeDatum[])
+      .force(
+        "link",
+        d3
+          .forceLink(linksData)
+          .id((d: any) => d.id)
+          .distance(300)
+      )
+      .force("charge", d3.forceManyBody().strength(-1500))
+      .force("center", d3.forceCenter(width / 2, height / 2));
+
+    simulation.force(
+      "x",
+      d3
+        .forceX<d3.SimulationNodeDatum>()
+        .x((d: any) => {
+          if (d.type === "input") return width * 0.2;
+          if (d.type === "output") return width * 0.8;
+          return width / 2;
+        })
+        .strength(0.7)
+    );
+
+    const linkArc = (d: any) => {
+      const dx = d.target.x - d.source.x;
+      const dy = d.target.y - d.source.y;
+      const dr = Math.sqrt(dx * dx + dy * dy);
+
+      const controlPoint1 = {
+        x: d.source.x + dx / 3 + (Math.random() - 0.5) * 100,
+        y: d.source.y + dy / 3 + (Math.random() - 0.5) * 100,
+      };
+      const controlPoint2 = {
+        x: d.source.x + (2 * dx) / 3 + (Math.random() - 0.5) * 100,
+        y: d.source.y + (2 * dy) / 3 + (Math.random() - 0.5) * 100,
+      };
+
+      return `M${d.source.x},${d.source.y} C${controlPoint1.x},${controlPoint1.y} ${controlPoint2.x},${controlPoint2.y} ${d.target.x},${d.target.y}`;
+    };
+
+    const link = g
+      .append("g")
+      .selectAll("path")
+      .data(linksData)
+      .join("path")
+      .attr("fill", "none")
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 1)
+      .style("opacity", "0.5");
+
+    const arrowsGroup = g.append("g");
+
+    const colorScale = d3
+      .scaleOrdinal<string>()
+      .domain(["input", "output", "master"])
+      .range(["#DC143C", "#B22222", "#800000"]);
+
+    const node = g
+      .append("g")
+      .selectAll("circle")
+      .data(nodesData)
+      .join("circle")
+      .attr("r", (d) => (d.type === "master" ? 40 : 25))
+      .attr("fill", (d) => colorScale(d.type));
+
+    const text = g
+      .append("g")
+      .selectAll("text")
+      .data(nodesData)
+      .join("text")
+      .attr("text-anchor", "middle")
+      .attr("alignment-baseline", "middle")
+      .text((d) => d.id)
+      .style("fill", "#fff")
+      .style("font-size", (d) => (d.type === "master" ? "14px" : "10px"));
+
+    const drag = d3
+      .drag<SVGCircleElement, Node>()
+      .on("start", (event, d: any) => {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      })
+      .on("drag", (event, d: any) => {
+        d.fx = event.x;
+        d.fy = event.y;
+      })
+      .on("end", (event, d: any) => {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      });
+
+    node.call(drag as any);
+
+    const updateMovingArrows = () => {
+      arrowsGroup.selectAll("circle").remove();
+
+      link.each((d: any, i, nodes) => {
+        const path = nodes[i] as SVGPathElement;
+        const length = path.getTotalLength();
+        const numArrows = Math.floor(length / 60);
+
+        for (let j = 0; j < numArrows; j++) {
+          const t = (j / numArrows + Date.now() / 3000) % 2;
+          const point = path.getPointAtLength(t * length);
+
+          arrowsGroup
+            .append("circle")
+            .attr("cx", point.x)
+            .attr("cy", point.y)
+            .attr("r", 3)
+            .attr("fill", "#999");
+        }
+      });
+    };
+
+    simulation.on("tick", () => {
+      link.attr("d", linkArc);
+
+      node.attr("cx", (d: any) => d.x).attr("cy", (d: any) => d.y);
+
+      text.attr("x", (d: any) => d.x).attr("y", (d: any) => d.y);
+
+      updateMovingArrows();
+    });
+
+    function animate() {
+      updateMovingArrows();
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  }, [nodesData, linksData]);
+
+  return <svg ref={svgRef} className="w-full h-full"></svg>;
+};
+
+export default DirectedGraph;
