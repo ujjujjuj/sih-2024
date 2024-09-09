@@ -2,12 +2,12 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
-interface Node {
+export interface Node {
   id: string;
   type: string;
 }
 
-interface Link {
+export interface Link {
   source: string;
   target: string;
 }
@@ -15,25 +15,21 @@ const a1 = Math.random();
 const b1 = Math.random();
 const c1 = Math.random();
 const d1 = Math.random();
-const DirectedGraph: React.FC = () => {
+const DirectedGraph = ({ nodes, links }: { nodes: Node[]; links: Link[] }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const [nodesData, setNodesData] = useState<Node[]>([]);
-  const [linksData, setLinksData] = useState<Link[]>([]);
+  const [_nodesData, setNodesData] = useState<Node[]>(nodes);
+  const [_linksData, setLinksData] = useState<Link[]>(links);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const response = await fetch("/api/nodes");
-      const data = await response.json();
-
-      setNodesData(data.nodes);
-      setLinksData(data.links);
-    };
-
-    fetchData();
-  }, []);
+    setNodesData(nodes);
+  }, [nodes]);
 
   useEffect(() => {
-    if (nodesData.length === 0 || linksData.length === 0 || !svgRef.current)
+    setLinksData(links);
+  }, [links]);
+
+  useEffect(() => {
+    if (_nodesData.length === 0 || _linksData.length === 0 || !svgRef.current)
       return;
 
     const width = 1000;
@@ -59,11 +55,11 @@ const DirectedGraph: React.FC = () => {
     svg.call(zoom);
 
     const simulation = d3
-      .forceSimulation(nodesData as d3.SimulationNodeDatum[])
+      .forceSimulation(_nodesData as d3.SimulationNodeDatum[])
       .force(
         "link",
         d3
-          .forceLink(linksData)
+          .forceLink(_linksData)
           .id((d: any) => d.id)
           .distance(300)
       )
@@ -102,7 +98,7 @@ const DirectedGraph: React.FC = () => {
     const link = g
       .append("g")
       .selectAll("path")
-      .data(linksData)
+      .data(_linksData)
       .join("path")
       .attr("fill", "none")
       .attr("stroke", "#fff")
@@ -119,7 +115,7 @@ const DirectedGraph: React.FC = () => {
     const node = g
       .append("g")
       .selectAll("circle")
-      .data(nodesData)
+      .data(_nodesData)
       .join("circle")
       .attr("r", (d) => (d.type === "master" ? 40 : 25))
       .attr("fill", (d) => colorScale(d.type));
@@ -127,7 +123,7 @@ const DirectedGraph: React.FC = () => {
     const text = g
       .append("g")
       .selectAll("text")
-      .data(nodesData)
+      .data(_nodesData)
       .join("text")
       .attr("text-anchor", "middle")
       .attr("alignment-baseline", "middle")
@@ -192,7 +188,7 @@ const DirectedGraph: React.FC = () => {
     }
 
     animate();
-  }, [nodesData, linksData]);
+  }, [_nodesData, _linksData]);
 
   return <svg ref={svgRef} className="w-full h-full"></svg>;
 };

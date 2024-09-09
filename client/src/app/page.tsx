@@ -1,9 +1,42 @@
 "use client";
 import { useQuery } from "react-query";
-import DirectedGraph from "./components/DirectedGraph";
+import DirectedGraph, { Link, Node } from "./components/DirectedGraph";
 import { useEffect, useState } from "react";
 
-// function processQueryData(data) {}
+type GraphTransaction = {
+  hash: string;
+  to: string;
+  value: string;
+};
+
+type Graph = Record<string, Array<GraphTransaction>>;
+
+function processQueryData(data: Graph) {
+  const links = new Array<Link>();
+  const nodes = new Array<Node>();
+  // const nodeHashes = new Set<string>();
+
+  for (const [hash, txns] of Object.entries(data)) {
+    // nodeHashes.add(hash);
+    nodes.push({
+      id: hash,
+      type: "source",
+    });
+    for (const txn of txns) {
+      nodes.push({
+        id: txn.to,
+        type: "child",
+      });
+
+      links.push({
+        source: hash,
+        target: txn.to,
+      });
+    }
+  }
+
+  return { links, nodes };
+}
 
 export default function Home() {
   const [walletAddress, setWalletAddress] = useState("");
@@ -24,7 +57,7 @@ export default function Home() {
       }
 
       const data = await resp.json();
-      return data;
+      return processQueryData(data as Graph);
     },
     enabled: walletAddress != "",
   });
@@ -51,7 +84,10 @@ export default function Home() {
         <h1 className="text-4xl font-bold mb-6 text-gray-100">SIH</h1>
 
         <div className="w-full h-[700px] bg-black shadow-lg rounded-lg p-4">
-          <DirectedGraph />
+          <DirectedGraph
+            nodes={nodesQuery.data?.nodes ?? []}
+            links={nodesQuery.data?.links ?? []}
+          />
         </div>
       </main>
     </div>
