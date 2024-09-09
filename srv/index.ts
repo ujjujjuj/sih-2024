@@ -3,14 +3,17 @@ import express from "express"
 import "express-async-errors"
 import getAccountGraph from "./core/api"
 import errorHandler, { UserError } from "./middleware/error-handler"
+import cors from "cors"
 
 import { isAddress } from "web3-validator"
 
 const app = express()
+app.use(cors())
 const port = process.env.PORT || 3000
 
 app.get("/info/:addr", async (req, res) => {
   let depth = req.query.depth
+  console.log(depth)
 
   if (
     depth !== undefined &&
