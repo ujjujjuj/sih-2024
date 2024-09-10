@@ -22,7 +22,7 @@ function processQueryData(data: Graph) {
     if (!nodeHashes.has(hash)) {
       nodes.push({
         id: hash,
-        type: "source",
+        type: "master",
       });
       nodeHashes.add(hash);
     }
@@ -31,7 +31,7 @@ function processQueryData(data: Graph) {
       if (!nodeHashes.has(txn.to)) {
         nodes.push({
           id: txn.to,
-          type: "child",
+          type: "output",
         });
         nodeHashes.add(txn.to);
       }
@@ -50,6 +50,7 @@ export default function Home() {
   const [walletAddress, setWalletAddress] = useState("");
   const [depth, setDepth] = useState("3");
   const [isLoading, setIsLoading] = useState(false);
+  console.log(process.env.NEXT_PUBLIC_BACKEND_URL)
 
   const nodesQuery = useMutation({
     mutationKey: ["query", walletAddress, depth],

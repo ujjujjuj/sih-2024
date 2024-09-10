@@ -25,6 +25,8 @@ const DirectedGraph = ({
   onNodeClick: (nodeId: string) => void;
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
   const [_nodesData, setNodesData] = useState<Node[]>(nodes);
   const [_linksData, setLinksData] = useState<Link[]>(links);
 
@@ -120,6 +122,34 @@ const DirectedGraph = ({
       .domain(["input", "output", "master"])
       .range(["#DC143C", "#B22222", "#800000"]);
 
+    // const tooltip = d3
+    //   .select(containerRef.current)
+    //   .append("div")
+    //   .style("opacity", 0)
+    //   .attr("class", "tooltip")
+    //   .style("background-color", "white")
+    //   .style("border", "solid")
+    //   .style("border-width", "2px")
+    //   .style("border-radius", "5px")
+    //   .style("padding", "5px")
+    //   .style("postion", "absolute");
+
+    // const mouseover = function (d) {
+    //   tooltip.style("opacity", 1);
+    //   d3.select(this).style("stroke", "black").style("opacity", 1);
+    // };
+    // const mousemove = function (event) {
+    //   console.log(event.pageX, event.pageY);
+    //   tooltip
+    //     .html("The exact value of<br>this cell is: ")
+    //     .style("left", event.pageX + 70 + "px")
+    //     .style("top", event.pageY + "px");
+    // };
+    // const mouseleave = function (d) {
+    //   tooltip.style("opacity", 0);
+    //   d3.select(this).style("stroke", "none").style("opacity", 0.8);
+    // };
+
     const node = g
       .append("g")
       .selectAll("circle")
@@ -131,6 +161,9 @@ const DirectedGraph = ({
         console.log("clicked account is : ", d.id);
         onNodeClick(d.id);
       });
+    // .on("mouseover", mouseover)
+    // .on("mousemove", mousemove)
+    // .on("mouseleave", mouseleave);
 
     const text = g
       .append("g")
@@ -162,27 +195,27 @@ const DirectedGraph = ({
 
     node.call(drag as any);
 
-    const updateMovingArrows = () => {
-      arrowsGroup.selectAll("circle").remove();
+    // const updateMovingArrows = () => {
+    //   arrowsGroup.selectAll("circle").remove();
 
-      link.each((d: any, i, nodes) => {
-        const path = nodes[i] as SVGPathElement;
-        const length = path.getTotalLength();
-        const numArrows = Math.floor(length / 60);
+    //   link.each((d: any, i, nodes) => {
+    //     const path = nodes[i] as SVGPathElement;
+    //     const length = path.getTotalLength();
+    //     const numArrows = Math.floor(length / 60);
 
-        for (let j = 0; j < numArrows; j++) {
-          const t = (j / numArrows + Date.now() / 3000) % 2;
-          const point = path.getPointAtLength(t * length);
+    //     for (let j = 0; j < numArrows; j++) {
+    //       const t = (j / numArrows + Date.now() / 3000) % 2;
+    //       const point = path.getPointAtLength(t * length);
 
-          arrowsGroup
-            .append("circle")
-            .attr("cx", point.x)
-            .attr("cy", point.y)
-            .attr("r", 3)
-            .attr("fill", "#999");
-        }
-      });
-    };
+    //       arrowsGroup
+    //         .append("circle")
+    //         .attr("cx", point.x)
+    //         .attr("cy", point.y)
+    //         .attr("r", 3)
+    //         .attr("fill", "#999");
+    //     }
+    //   });
+    // };
 
     simulation.on("tick", () => {
       link.attr("d", linkArc);
@@ -191,18 +224,22 @@ const DirectedGraph = ({
 
       text.attr("x", (d: any) => d.x).attr("y", (d: any) => d.y);
 
-      updateMovingArrows();
+      // updateMovingArrows();
     });
 
     function animate() {
-      updateMovingArrows();
+      // updateMovingArrows();
       requestAnimationFrame(animate);
     }
 
     animate();
   }, [_nodesData, _linksData, onNodeClick]);
 
-  return <svg ref={svgRef} className="w-full h-full"></svg>;
+  return (
+    <div ref={containerRef}>
+      <svg ref={svgRef} className="w-full h-full"></svg>
+    </div>
+  );
 };
 
 export default DirectedGraph;

@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  client:
+    container_name: client_sih_yuvbharat
+    build: 
+      context: ./client
+      dockerfile: ./Dockerfile
+      args:
+        - backend_url=http://localhost:3001
+    ports:
+      - "3000:3000"
+  srv:
+    container_name: backend_sih_yuvbharat
+    build: 
+      context: ./srv
+      dockerfile: ./Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      ETHERSCAN_API_URL: https://api.etherscan.io/api
+      ETHERSCAN_API_KEY: 3XEGEFQ1R9FS5APG7P2TUKEN258VDKEISK
