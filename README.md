@@ -1,7 +1,9 @@
 
 # Team Yuvbharat - Cryptotrace
 
-![](https://github.com/ujjujjuj/sih-2024/raw/master/static/demo.mp4)
+<video width="320" height="240" controls>
+  <source src="https://github.com/ujjujjuj/sih-2024/raw/master/static/demo.mp4" type="video/mp4">
+</video>
 
 ## Problem statement details
 
