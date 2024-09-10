@@ -1,7 +1,7 @@
 "use client";
 import { useMutation } from "react-query";
 import DirectedGraph, { Link, Node } from "./components/DirectedGraph";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -19,7 +19,6 @@ function processQueryData(data: Graph) {
   const nodeHashes = new Set<string>();
 
   for (const [hash, txns] of Object.entries(data)) {
-    // nodeHashes.add(hash);
     if (!nodeHashes.has(hash)) {
       nodes.push({
         id: hash,
@@ -50,6 +49,7 @@ function processQueryData(data: Graph) {
 export default function Home() {
   const [walletAddress, setWalletAddress] = useState("");
   const [depth, setDepth] = useState("3");
+  const [isLoading, setIsLoading] = useState(false);
 
   const nodesQuery = useMutation({
     mutationKey: ["query", walletAddress, depth],
@@ -62,16 +62,20 @@ export default function Home() {
     }) => {
       if (walletAddress === "") throw new Error("wallet address empty");
 
-      // call the backend code
-      const resp = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/info/${walletAddress}?depth=${depth}`
-      );
-      if (!resp.ok) {
-        throw new Error("Someting went wrong");
-      }
+      setIsLoading(true);
+      try {
+        const resp = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/info/${walletAddress}?depth=${depth}`
+        );
+        if (!resp.ok) {
+          throw new Error("Something went wrong");
+        }
 
-      const data = await resp.json();
-      return processQueryData(data as Graph);
+        const data = await resp.json();
+        return processQueryData(data as Graph);
+      } finally {
+        setIsLoading(false);
+      }
     },
   });
 
@@ -79,12 +83,24 @@ export default function Home() {
     console.log(nodesQuery.data);
   }, [nodesQuery.data]);
 
+  const handleNodeClick = useCallback(
+    (nodeId: string) => {
+      setWalletAddress(nodeId);
+      nodesQuery.mutate({ walletAddress: nodeId, depth });
+    },
+    [depth, nodesQuery]
+  );
+
+  const handleCompute = useCallback(() => {
+    nodesQuery.mutate({ walletAddress, depth });
+  }, [walletAddress, depth, nodesQuery]);
+
   return (
     <div className="flex flex-col min-h-screen bg-primary text-primary">
       <header className="bg-primary py-4 px-6 border-b">
         <h1 className="text-2xl text-white font-bold">Yuvbharat</h1>
       </header>
-      <main className="flex-1  ">
+      <main className="flex-1">
         <div className="grid grid-cols-2 w-full">
           <div className="bg-primary text-card rounded-lg shadow-md p-6 flex-1">
             <h2 className="text-lg font-semibold mb-4">Wallet Address</h2>
@@ -98,7 +114,7 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className=" bg-primary text-card rounded-lg shadow-md p-6  flex-1">
+          <div className="bg-primary text-card rounded-lg shadow-md p-6 flex-1">
             <h2 className="text-lg font-semibold mb-4">Max Depth</h2>
             <div className="flex items-center space-x-4">
               <Input
@@ -113,27 +129,28 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <div className="flex justify-center pb-4 ">
+        <div className="flex justify-center pb-4">
           <Button
             variant={"secondary"}
             className="mx-auto w-32 text-base flex-shrink-0"
-            onClick={() => {
-              nodesQuery.mutate({
-                walletAddress,
-                depth,
-              });
-            }}
+            onClick={handleCompute}
+            disabled={isLoading}
           >
-            Compute
+            {isLoading ? "Loading..." : "Compute"}
           </Button>
         </div>
         <hr />
-        <div className="col-span-1 md:col-span-2  rounded-lg shadow-md p-6">
+        <div className="col-span-1 md:col-span-2 rounded-lg shadow-md p-6">
           <h2 className="text-lg font-semibold mb-4 text-white">Nodes</h2>
-          <DirectedGraph
-            nodes={nodesQuery.data?.nodes ?? []}
-            links={nodesQuery.data?.links ?? []}
-          />
+          {isLoading ? (
+            <div className="text-white text-center">Loading...</div>
+          ) : (
+            <DirectedGraph
+              nodes={nodesQuery.data?.nodes ?? []}
+              links={nodesQuery.data?.links ?? []}
+              onNodeClick={handleNodeClick}
+            />
+          )}
         </div>
       </main>
     </div>

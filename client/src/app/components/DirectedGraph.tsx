@@ -15,7 +15,15 @@ const a1 = Math.random();
 const b1 = Math.random();
 const c1 = Math.random();
 const d1 = Math.random();
-const DirectedGraph = ({ nodes, links }: { nodes: Node[]; links: Link[] }) => {
+const DirectedGraph = ({
+  nodes,
+  links,
+  onNodeClick,
+}: {
+  nodes: Node[];
+  links: Link[];
+  onNodeClick: (nodeId: string) => void;
+}) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [_nodesData, setNodesData] = useState<Node[]>(nodes);
   const [_linksData, setLinksData] = useState<Link[]>(links);
@@ -119,8 +127,9 @@ const DirectedGraph = ({ nodes, links }: { nodes: Node[]; links: Link[] }) => {
       .join("circle")
       .attr("r", (d) => (d.type === "master" ? 40 : 25))
       .attr("fill", (d) => colorScale(d.type))
-      .on("click", (event, d) => {
-        console.log("Account name:", d.id);
+      .on("click", (event, d: Node) => {
+        console.log("clicked account is : ", d.id);
+        onNodeClick(d.id);
       });
 
     const text = g
@@ -191,7 +200,7 @@ const DirectedGraph = ({ nodes, links }: { nodes: Node[]; links: Link[] }) => {
     }
 
     animate();
-  }, [_nodesData, _linksData]);
+  }, [_nodesData, _linksData, onNodeClick]);
 
   return <svg ref={svgRef} className="w-full h-full"></svg>;
 };
