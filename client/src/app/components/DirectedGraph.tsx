@@ -118,7 +118,10 @@ const DirectedGraph = ({ nodes, links }: { nodes: Node[]; links: Link[] }) => {
       .data(_nodesData)
       .join("circle")
       .attr("r", (d) => (d.type === "master" ? 40 : 25))
-      .attr("fill", (d) => colorScale(d.type));
+      .attr("fill", (d) => colorScale(d.type))
+      .on("click", (event, d) => {
+        console.log("Account name:", d.id);
+      });
 
     const text = g
       .append("g")
