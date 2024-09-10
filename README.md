@@ -1,7 +1,7 @@
 
 # Team Yuvbharat - Cryptotrace
 
-![](https://github.com/ujjujjuj/sih-2024/blob/master/static/demo.mp4)
+![](https://github.com/ujjujjuj/sih-2024/raw/master/static/demo.mp4)
 
 ## Problem statement details
 
