@@ -13,7 +13,6 @@ const port = process.env.PORT || 3000
 
 app.get("/info/:addr", async (req, res) => {
   let depth = req.query.depth
-  console.log(depth)
 
   if (
     depth !== undefined &&

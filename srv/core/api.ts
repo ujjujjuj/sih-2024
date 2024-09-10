@@ -61,10 +61,11 @@ const getAccountGraph = async (
   const neighborPromises: Array<Promise<Graph>> = []
   for (const tx of resp.data.result) {
     if (tx.from === address && tx.to.length > 0) {
-      graph[address] = [
-        ...(graph[address] ?? []),
-        { to: tx.to, hash: tx.hash, value: tx.value },
-      ]
+      if (!(address in graph)) {
+        graph[address] = []
+      }
+      graph[address].push({ to: tx.to, hash: tx.hash, value: tx.value })
+
       if (!visited.has(tx.to)) {
         neighborPromises.push(
           getAccountGraph(
@@ -77,9 +78,6 @@ const getAccountGraph = async (
           )
         )
       }
-    }
-    if (depth === 0) {
-      console.log(tx.hash)
     }
   }
   await Promise.all(neighborPromises)
