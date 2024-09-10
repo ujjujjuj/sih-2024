@@ -121,7 +121,7 @@ export default function Home() {
                 type="number"
                 min="1"
                 max="10"
-                defaultValue="3"
+                defaultValue="2"
                 className="flex-1"
                 value={depth}
                 onChange={(e) => setDepth(e.target.value)}
